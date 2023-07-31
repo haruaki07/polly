@@ -1,0 +1,49 @@
+type Query {
+  events: [Event]!
+  event(code: ID!): Event
+}
+
+input CreateQuestionInput {
+  content: String!
+  username: String
+}
+
+input UpvoteQuestionInput {
+  id: ID!
+}
+
+type JoinEventResponse {
+  success: Boolean!
+  message: String
+  token: String
+}
+
+type Mutation {
+  createEvent: Event
+  joinEvent(code: ID!): JoinEventResponse
+  createQuestion(input: CreateQuestionInput!): Question
+  upvoteQuestion(input: UpvoteQuestionInput!): Int!
+}
+
+type EventQuestionsUpvoteResponse {
+  question_id: ID!
+  upvotes: Int!
+}
+
+type Subscription {
+  eventNewQuestion: Question!
+  eventQuestionsUpvote: EventQuestionsUpvoteResponse!
+}
+
+type Event {
+  code: ID!
+  questions: [Question]!
+}
+
+type Question {
+  id: ID!
+  content: String!
+  username: String
+  upvotes: Int!
+  created_at: String
+}
