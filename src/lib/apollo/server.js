@@ -5,25 +5,14 @@ import {
   ApolloServerPluginLandingPageLocalDefault,
   ApolloServerPluginLandingPageProductionDefault,
 } from "@apollo/server/plugin/landingPage/default"
-import { makeExecutableSchema } from "@graphql-tools/schema"
 import cookie from "cookie"
 import { useServer } from "graphql-ws/lib/use/ws"
-import { readFile } from "node:fs/promises"
-import { join } from "node:path"
-import { jwt } from "../jwt"
-import { resolvers } from "../../resolvers"
-
-const typeDefs = await readFile(join(__dirname, "schema.graphql"), {
-  encoding: "utf-8",
-})
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
-})
+import { jwt } from "../jwt.js"
 
 /**
  *
  * @param {{
+ *   schema: import("graphql").GraphQLSchema,
  *   httpServer: import("http").Server,
  *   wsServer: import("ws").WebSocketServer,
  *   deps: {
@@ -34,6 +23,7 @@ const schema = makeExecutableSchema({
  * @returns
  */
 export async function createApolloServer({
+  schema,
   httpServer,
   wsServer,
   deps: { pubsub, sqlite },
@@ -87,26 +77,27 @@ export async function createApolloServer({
     ],
   })
 
-  const expressMiddleware = _expressMiddleware(server, {
-    context: async ({ req, res }) => {
-      const tokenCookie = req.cookies.token
+  const expressMiddleware = () =>
+    _expressMiddleware(server, {
+      context: async ({ req, res }) => {
+        const tokenCookie = req.cookies.token
 
-      if (isDev) {
-        res.setHeader(
-          "Access-Control-Allow-Origin",
-          "https://sandbox.embed.apollographql.com"
-        )
-        res.setHeader("Access-Control-Allow-Credentials", "true")
-      }
+        if (isDev) {
+          res.setHeader(
+            "Access-Control-Allow-Origin",
+            "https://sandbox.embed.apollographql.com"
+          )
+          res.setHeader("Access-Control-Allow-Credentials", "true")
+        }
 
-      return {
-        token: tokenCookie ? { payload: jwt.verifyToken(tokenCookie) } : null,
-        dataSources: { sqlite },
-        pubsub,
-        res,
-      }
-    },
-  })
+        return {
+          token: tokenCookie ? { payload: jwt.verifyToken(tokenCookie) } : null,
+          dataSources: { sqlite },
+          pubsub,
+          res,
+        }
+      },
+    })
 
   return {
     server,
