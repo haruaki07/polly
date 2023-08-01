@@ -1,6 +1,6 @@
 import { withFilter } from "graphql-subscriptions"
 import { jwt } from "./lib/jwt.js"
-import { GraphQLError } from "graphql"
+import { GraphQLError, valueFromASTUntyped } from "graphql"
 
 class AuthenticationError extends GraphQLError {
   constructor() {
@@ -21,8 +21,22 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createEvent: (_, __, { dataSources }) => {
-      return dataSources.sqlite.createEvent()
+    createEvent: (_, __, { dataSources, res }) => {
+      const event = dataSources.sqlite.createEvent()
+
+      const token = jwt.createToken({
+        event_code: event.code,
+        admin: true,
+      })
+      res.cookie(
+        "token",
+        token,
+        process.env.NODE_ENV === "development"
+          ? { sameSite: "None", secure: true }
+          : {}
+      )
+
+      return event
     },
     joinEvent: (_, { code }, { dataSources, res }) => {
       try {
@@ -32,7 +46,7 @@ export const resolvers = {
             extensions: { code: "BAD_USER_INPUT" },
           })
 
-        const token = jwt.createToken(event.code)
+        const token = jwt.createToken({ event_code: event.code })
         res.cookie(
           "token",
           token,
