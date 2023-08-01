@@ -2,7 +2,9 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon -e js,graphql -w src src/server.js"
+    "dev": "cross-env NODE_ENV=development nodemon --config nodemon.json src/server.js",
+    "build": "vite build",
+    "start": "npm run build && node src/server.js"
   },
   "dependencies": {
     "@apollo/server": "^4.9.0",
@@ -20,7 +22,9 @@
     "ws": "^8.13.0"
   },
   "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^2.4.3",
     "cross-env": "^7.0.3",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "vite": "^4.4.7"
   }
 }

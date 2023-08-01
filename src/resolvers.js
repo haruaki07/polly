@@ -1,5 +1,5 @@
 import { withFilter } from "graphql-subscriptions"
-import { jwt } from "./jwt.js"
+import { jwt } from "./lib/jwt.js"
 import { GraphQLError } from "graphql"
 
 class AuthenticationError extends GraphQLError {

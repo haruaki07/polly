@@ -1,28 +1,19 @@
-import { ApolloServer } from "@apollo/server"
-import { expressMiddleware } from "@apollo/server/express4"
-import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
-import {
-  ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginLandingPageProductionDefault,
-} from "@apollo/server/plugin/landingPage/default"
-import { makeExecutableSchema } from "@graphql-tools/schema"
-import cookie from "cookie"
 import cookieParser from "cookie-parser"
 import express from "express"
-import { readFile } from "fs/promises"
 import { RedisPubSub } from "graphql-redis-subscriptions"
-import { useServer } from "graphql-ws/lib/use/ws"
-import { createServer } from "http"
-import { dirname, join } from "path"
-import { fileURLToPath } from "url"
-import { WebSocketServer } from "ws"
-import { SQLiteDataSource } from "./datasource.js"
-import { initDB } from "./db.js"
-import { jwt } from "./jwt.js"
-import { resolvers } from "./resolvers.js"
 import helmet from "helmet"
+import { createServer } from "node:http"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+import { createServer as createViteServer, resolveConfig } from "vite"
+import { WebSocketServer } from "ws"
+import viteConfig from "../vite.config.js"
+import { SQLiteDataSource } from "./datasource.js"
+import { createApolloServer } from "./lib/apollo/server.js"
+import { initDB } from "./lib/db.js"
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+global.__dirname = dirname(fileURLToPath(import.meta.url))
+const isDev = process.env.NODE_ENV === "development"
 const PORT = 3000
 
 const database = initDB(join(__dirname, "..", "pooly.db"))
@@ -33,106 +24,54 @@ const pubsub = new RedisPubSub({
   },
 })
 
-const typeDefs = await readFile(join(__dirname, "schema.graphql"), {
-  encoding: "utf-8",
-})
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
-})
-
 const app = express()
+
 app.use(
   express.json(),
   cookieParser(),
   helmet({
-    contentSecurityPolicy:
-      process.env.NODE_ENV === "development" ? false : undefined,
+    contentSecurityPolicy: isDev ? false : undefined,
   })
 )
 
 const httpServer = createServer(app)
-
-// Set up WebSocket server.
 const wsServer = new WebSocketServer({
   server: httpServer,
   path: "/graphql",
 })
-const serverCleanup = useServer(
-  {
-    schema,
-    context: async (ctx) => {
-      const cookies = cookie.parse(ctx.extra.request.headers.cookie)
 
-      return {
-        pubsub,
-        token: cookies.token
-          ? { payload: jwt.verifyToken(cookies.token) }
-          : null,
-      }
-    },
+const { server, expressMiddleware } = await createApolloServer({
+  httpServer,
+  wsServer,
+  deps: {
+    pubsub,
+    sqlite: new SQLiteDataSource({ database }),
   },
-  wsServer
-)
-
-// Set up ApolloServer.
-const server = new ApolloServer({
-  schema,
-  plugins: [
-    process.env.NODE_ENV === "development"
-      ? ApolloServerPluginLandingPageLocalDefault({
-          footer: false,
-          includeCookies: true,
-        })
-      : ApolloServerPluginLandingPageProductionDefault({
-          footer: false,
-          includeCookies: true,
-        }),
-
-    // Proper shutdown for the HTTP server.
-    ApolloServerPluginDrainHttpServer({ httpServer }),
-
-    // Proper shutdown for the WebSocket server.
-    {
-      async serverWillStart() {
-        return {
-          async drainServer() {
-            await serverCleanup.dispose()
-          },
-        }
-      },
-    },
-  ],
 })
 
+// apollo load schema, and apply plugins
 await server.start()
-app.use(
-  "/graphql",
-  expressMiddleware(server, {
-    context: async ({ req, res }) => {
-      const tokenCookie = req.cookies.token
 
-      if (process.env.NODE_ENV === "development") {
-        res.setHeader(
-          "Access-Control-Allow-Origin",
-          "https://sandbox.embed.apollographql.com"
-        )
-        res.setHeader("Access-Control-Allow-Credentials", "true")
-      }
+app.use("/graphql", expressMiddleware)
 
-      return {
-        token: tokenCookie ? { payload: jwt.verifyToken(tokenCookie) } : null,
-        dataSources: {
-          sqlite: new SQLiteDataSource({ database }),
-        },
-        pubsub,
-        res,
-      }
-    },
+// front-end
+if (isDev) {
+  const vite = await createViteServer({
+    ...viteConfig,
+    server: { middlewareMode: true },
   })
-)
+
+  app.use(vite.middlewares)
+} else {
+  const buildConfig = await resolveConfig(viteConfig, "build")
+  const dist = buildConfig.build.outDir
+
+  app.use(express.static(dist))
+  app.use("*", (_, res) => {
+    res.sendFile(join(dist, "index.html"))
+  })
+}
 
 httpServer.listen(PORT, () => {
-  console.log(`Query endpoint ready at http://localhost:${PORT}/graphql`)
-  console.log(`Subscription endpoint ready at ws://localhost:${PORT}/graphql`)
+  console.log(`Server is running at http://localhost:${PORT}`)
 })

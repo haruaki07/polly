@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ignore": ["src/web/*"],
+  "ext": "js,graphql",
+  "exec": "node src/server.js"
+}
