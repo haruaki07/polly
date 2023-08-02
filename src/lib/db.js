@@ -7,7 +7,8 @@ export function initDB(file) {
 
   db.exec(/* sql */ `
     CREATE TABLE IF NOT EXISTS events (
-      code VARCHAR(10) UNIQUE
+      code VARCHAR(10) UNIQUE,
+      name VARCHAR(100) NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS questions (

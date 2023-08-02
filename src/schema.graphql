@@ -18,8 +18,12 @@ type JoinEventResponse {
   token: String
 }
 
+input CreateEventInput {
+  name: String!
+}
+
 type Mutation {
-  createEvent: Event
+  createEvent(input: CreateEventInput!): Event
   joinEvent(code: ID!): JoinEventResponse
   createQuestion(input: CreateQuestionInput!): Question
   upvoteQuestion(input: UpvoteQuestionInput!): Int!
@@ -36,6 +40,7 @@ type Subscription {
 }
 
 type Event {
+  name: String!
   code: ID!
   questions: [Question]!
 }

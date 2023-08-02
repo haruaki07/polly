@@ -1,10 +1,11 @@
 <script>
   import { gql } from "@apollo/client/core"
-  import { AppBar, toastStore } from "@skeletonlabs/skeleton"
+  import { AppBar, modalStore, toastStore } from "@skeletonlabs/skeleton"
   import { mutation } from "svelte-apollo"
   import Container from "../lib/components/Container.svelte"
   import Logo from "../lib/components/Logo.svelte"
   import Spinner from "../lib/components/Spinner.svelte"
+  import { loadingStore } from "../stores/loading"
 
   const joinEvent = mutation(gql`
     mutation JoinEvent($event_code: ID!) {
@@ -12,6 +13,15 @@
         success
         message
         token
+      }
+    }
+  `)
+
+  const createEvent = mutation(gql`
+    mutation CreateEvent($input: CreateEventInput!) {
+      createEvent(input: $input) {
+        code
+        name
       }
     }
   `)
@@ -61,12 +71,45 @@
     } catch (e) {
       console.error(e)
       toastStore.trigger({
-        message: "An error occurred!",
+        message: `Failed to join event #${code}! An error occurred!`,
         background: "variant-filled-error",
       })
     } finally {
       isJoinning = false
     }
+  }
+
+  const handleCreateEvent = () => {
+    new Promise((resolv) => {
+      modalStore.trigger({
+        modalClasses: "!w-modal-slim",
+        type: "prompt",
+        title: "Create Event",
+        body: "Enter your event name.",
+        valueAttr: { type: "text", required: true },
+        response: resolv,
+      })
+    }).then(async (name) => {
+      if (name) {
+        try {
+          $loadingStore = true
+          const res = await createEvent({ variables: { input: { name } } })
+
+          toastStore.trigger({
+            message: `Event #${res.data.createEvent.code} created! Navigating...`,
+            background: "variant-filled-success",
+          })
+        } catch (e) {
+          console.error(e)
+          toastStore.trigger({
+            message: `Failed to create event! An error occurred.`,
+            background: "variant-filled-error",
+          })
+        } finally {
+          $loadingStore = false
+        }
+      }
+    })
   }
 </script>
 
@@ -109,7 +152,11 @@
         {/if}
         Join Event
       </button>
-      <button type="button" class="anchor text-xs mt-2">
+      <button
+        type="button"
+        class="anchor text-xs mt-2"
+        on:click={handleCreateEvent}
+      >
         or create event
       </button>
     </div>

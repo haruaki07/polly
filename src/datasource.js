@@ -10,21 +10,21 @@ export class SQLiteDataSource {
   }
 
   findEvents() {
-    const stmt = this.db.prepare("SELECT code FROM events")
+    const stmt = this.db.prepare("SELECT code, name FROM events")
     return stmt.all()
   }
 
   findEventByCode(code) {
-    const stmt = this.db.prepare("SELECT code FROM events WHERE code = ?")
+    const stmt = this.db.prepare("SELECT code, name FROM events WHERE code = ?")
     return stmt.get(code)
   }
 
-  createEvent() {
+  createEvent({ name }) {
     const code = Math.random().toString().slice(2, 8)
     const stmt = this.db.prepare(
-      "INSERT INTO events (code) VALUES (?) RETURNING code"
+      "INSERT INTO events (code, name) VALUES (?, ?) RETURNING code, name"
     )
-    return stmt.get(code)
+    return stmt.get(code, name)
   }
 
   createQuestion({ content, username, event_code }) {

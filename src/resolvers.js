@@ -21,8 +21,8 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createEvent: (_, __, { dataSources, res }) => {
-      const event = dataSources.sqlite.createEvent()
+    createEvent: (_, { input: { name } }, { dataSources, res }) => {
+      const event = dataSources.sqlite.createEvent({ name })
 
       const token = jwt.createToken({
         event_code: event.code,
