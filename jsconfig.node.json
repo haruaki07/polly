@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "allowJs": true,
+    "checkJs": true,
+    "resolveJsonModule": false,
+    "moduleResolution": "nodenext",
+    "target": "ESNext",
+    "module": "ES2022",
+    // idk why `outDir` resolved the overwriting error, it's just weird
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.js", "vite.config.js"],
+  "exclude": ["src/web/**/*"]
+}

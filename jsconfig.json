@@ -2,7 +2,7 @@
   "compilerOptions": {
     "moduleResolution": "bundler",
     "target": "ESNext",
-    "module": "ES2022",
+    "module": "ESNext",
     /**
      * svelte-preprocess cannot figure out whether you have
      * a value or a type, so tell TypeScript to enforce using
@@ -22,7 +22,9 @@
      * Typecheck JS in `.svelte` and `.js` files by default.
      * Disable this if you'd like to use dynamic types.
      */
-    "checkJs": false
+    "checkJs": false,
+    "outDir": "dist"
   },
-  "include": ["src/**/*.d.ts", "src/**/*.js", "src/web/**/*.svelte"]
+  "include": ["src/web/**/*.d.ts", "src/web/**/*.js", "src/web/**/*.svelte"],
+  "references": [{ "path": "./jsconfig.node.json" }]
 }

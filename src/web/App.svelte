@@ -1,5 +1,4 @@
 <script>
-  // @ts-nocheck
   import { Route, Router } from "svelte-routing"
   import Home from "./pages/Home.svelte"
   import client from "./lib/graphql/client"
