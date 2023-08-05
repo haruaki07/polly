@@ -1,13 +1,42 @@
 <script>
+  import { mutation } from "svelte-apollo"
+
   // import ChevronDown from "./Icons/ChevronDown.svelte"
   import ChevronUp from "./Icons/ChevronUp.svelte"
   import Trash from "./Icons/Trash.svelte"
   import { scale } from "svelte/transition"
+  import { gql } from "@apollo/client/core"
 
   export let question
+
+  const deleteQuestionMutation = mutation(gql`
+    mutation DeleteQuestion($input: DeleteQuestionInput!) {
+      deleteQuestion(input: $input) {
+        success
+        message
+      }
+    }
+  `)
+
+  const handleDelete = async () => {
+    try {
+      await deleteQuestionMutation({
+        variables: { input: { id: question.id } },
+      })
+    } catch (e) {
+      console.error(e)
+      toastStore.trigger({
+        message: `Failed to delete question! An error occurred.`,
+        background: "variant-filled-error",
+      })
+    }
+  }
 </script>
 
-<div class="card p-4 variant-soft space-y-2 group" transition:scale>
+<div
+  class="card p-4 variant-soft space-y-2 group"
+  transition:scale={{ duration: 200 }}
+>
   <header class="flex justify-between items-center">
     <p class="font-bold">{question.username ?? "Anonymous"}</p>
     <small class="opacity-50">
@@ -30,7 +59,11 @@
     </div>
 
     <div class="group-hover:opacity-100 opacity-0">
-      <button type="button" class="btn-icon btn-icon-sm variant-soft-error">
+      <button
+        type="button"
+        class="btn-icon btn-icon-sm variant-soft-error"
+        on:click={handleDelete}
+      >
         <Trash />
       </button>
     </div>

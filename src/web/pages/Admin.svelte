@@ -34,8 +34,9 @@
   // bind query loading state to loading overlay store
   $: $loadingStore = $eventQuery.loading
 
-  // subscribe to new questions and upvotes
+  // handle subscribtion
   $: if ($eventQuery.data?.event != null) {
+    // subscribe to new questions
     eventQuery.subscribeToMore({
       document: gql`
         subscription SubscribeEventQuestions {
@@ -62,6 +63,7 @@
       },
     })
 
+    // subscribe to questions upvote
     eventQuery.subscribeToMore({
       document: gql`
         subscription SubscribeEventQuestions {
@@ -80,6 +82,25 @@
             (q) => q.id === upvote.question_id
           )
           q.upvotes = upvote.upvotes
+        })
+      },
+    })
+
+    // subscribe to deleted questions
+    eventQuery.subscribeToMore({
+      document: gql`
+        subscription SubscribeEventQuestions {
+          eventDeleteQuestion
+        }
+      `,
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev
+        const questionId = subscriptionData.data.eventDeleteQuestion
+
+        return produce(prev, (draft) => {
+          draft.event.questions = draft.event.questions.filter(
+            (q) => q.id !== questionId
+          )
         })
       },
     })

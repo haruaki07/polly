@@ -99,6 +99,26 @@ export const resolvers = {
 
       return upvotes
     },
+    deleteQuestion: (_, { input: { id } }, { dataSources, pubsub, token }) => {
+      try {
+        if (!token) throw new AuthenticationError()
+
+        const questionId = dataSources.sqlite.deleteQuestion(id)
+        if (!questionId)
+          throw new GraphQLError("Question not found", {
+            extensions: { code: "BAD_USER_INPUT" },
+          })
+
+        pubsub.publish("EVENT_DELETE_QUESTION", {
+          event_code: token.payload.event_code,
+          eventDeleteQuestion: id,
+        })
+
+        return { success: true, message: "success" }
+      } catch (e) {
+        return { suscess: false, message: e.message }
+      }
+    },
   },
   Subscription: {
     eventNewQuestion: {
@@ -111,6 +131,17 @@ export const resolvers = {
           return (
             payload.eventNewQuestion.event_code === token.payload.event_code
           )
+        }
+      ),
+    },
+    eventDeleteQuestion: {
+      subscribe: withFilter(
+        (_, __, { pubsub, token }) => {
+          if (!token) new AuthenticationError()
+          return pubsub.asyncIterator("EVENT_DELETE_QUESTION")
+        },
+        (payload, _, { token }) => {
+          return payload.event_code === token.payload.event_code
         }
       ),
     },

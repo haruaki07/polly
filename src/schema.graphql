@@ -12,7 +12,12 @@ input UpvoteQuestionInput {
   id: ID!
 }
 
-type JoinEventResponse {
+interface MutationResponse {
+  success: Boolean!
+  message: String
+}
+
+type JoinEventResponse implements MutationResponse {
   success: Boolean!
   message: String
   token: String
@@ -22,10 +27,20 @@ input CreateEventInput {
   name: String!
 }
 
+input DeleteQuestionInput {
+  id: ID!
+}
+
+type DeleteQuestionResponse implements MutationResponse {
+  success: Boolean!
+  message: String
+}
+
 type Mutation {
   createEvent(input: CreateEventInput!): Event
   joinEvent(code: ID!): JoinEventResponse
   createQuestion(input: CreateQuestionInput!): Question
+  deleteQuestion(input: DeleteQuestionInput!): DeleteQuestionResponse
   upvoteQuestion(input: UpvoteQuestionInput!): Int!
 }
 
@@ -36,6 +51,7 @@ type EventQuestionsUpvoteResponse {
 
 type Subscription {
   eventNewQuestion: Question!
+  eventDeleteQuestion: ID!
   eventQuestionsUpvote: EventQuestionsUpvoteResponse!
 }
 

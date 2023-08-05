@@ -57,4 +57,11 @@ export class SQLiteDataSource {
     )
     return stmt.get(id)
   }
+
+  deleteQuestion(id) {
+    const stmt = this.#db.prepare(
+      `DELETE FROM questions WHERE rowid = ? RETURNING rowid as id`
+    )
+    return stmt.get(id)
+  }
 }
