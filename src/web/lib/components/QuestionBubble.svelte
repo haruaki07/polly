@@ -22,7 +22,11 @@
   </p>
   <div class="flex items-center justify-between">
     <div class="inline-flex items-center gap-x-2">
-      <span class="badge" title="10 Upvotes">
+      <span
+        class="badge"
+        class:text-secondary-500={question.upvotes > 2}
+        title="10 Upvotes"
+      >
         <ChevronUp />
         {question.upvotes}
       </span>

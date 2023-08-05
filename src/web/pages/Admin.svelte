@@ -1,7 +1,8 @@
 <script>
   import { gql } from "@apollo/client/core"
   import { AppBar } from "@skeletonlabs/skeleton"
-  import { query, subscribe } from "svelte-apollo"
+  import { produce } from "immer"
+  import { query } from "svelte-apollo"
   import AdminTabs from "../lib/components/AdminTabs.svelte"
   import Container from "../lib/components/Container.svelte"
   import QuestionBubble from "../lib/components/QuestionBubble.svelte"
@@ -32,22 +33,61 @@
     { variables: { code: params.code } }
   )
 
-  const newQuestionSubscribe = subscribe(gql`
-    subscription SubscribeEventQuestions {
-      eventNewQuestion {
-        id
-        content
-        upvotes
-        username
-        created_at
-      }
-    }
-  `)
-
+  // bind query loading state to loading overlay store
   $: $loadingStore = $eventQuery.loading
+
+  // subscribe to new questions and upvotes
   $: if ($eventQuery.data?.event) {
-    questions = [...$eventQuery.data?.event?.questions, ...questions]
+    eventQuery.subscribeToMore({
+      document: gql`
+        subscription SubscribeEventQuestions {
+          eventNewQuestion {
+            id
+            content
+            upvotes
+            username
+            created_at
+          }
+        }
+      `,
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev
+        const newQuestion = subscriptionData.data.eventNewQuestion
+        const exists = prev.event.questions.find(
+          ({ id }) => id === newQuestion.id
+        )
+        if (exists) return prev
+
+        return produce(prev, (draft) => {
+          draft.event.questions.unshift(newQuestion)
+        })
+      },
+    })
+
+    eventQuery.subscribeToMore({
+      document: gql`
+        subscription SubscribeEventQuestions {
+          eventQuestionsUpvote {
+            question_id
+            upvotes
+          }
+        }
+      `,
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev
+        const upvote = subscriptionData.data.eventQuestionsUpvote
+
+        return produce(prev, (draft) => {
+          const q = draft.event.questions.find(
+            (q) => q.id === upvote.question_id
+          )
+          q.upvotes = upvote.upvotes
+        })
+      },
+    })
   }
+
+  // refetch query on param code change
   $: {
     params.code
     $loadingStore = true
@@ -55,11 +95,10 @@
       .refetch({ code: params.code })
       .then(() => ($loadingStore = false))
   }
-  $: if ($newQuestionSubscribe.data?.eventNewQuestion) {
-    questions = [$newQuestionSubscribe.data.eventNewQuestion, ...questions]
-  }
-  $: sortedQuestions = [...questions].sort(
-    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+
+  $: sortedQuestions = [...($eventQuery.data?.event?.questions ?? [])].sort(
+    (a, b) =>
+      b.upvotes - a.upvotes || new Date(b.created_at) - new Date(a.created_at)
   )
 </script>
 
