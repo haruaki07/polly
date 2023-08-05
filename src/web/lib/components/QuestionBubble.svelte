@@ -7,10 +7,7 @@
   export let question
 </script>
 
-<div
-  class="card p-4 variant-soft rounded-tl-none space-y-2 group"
-  transition:scale
->
+<div class="card p-4 variant-soft space-y-2 group" transition:scale>
   <header class="flex justify-between items-center">
     <p class="font-bold">{question.username ?? "Anonymous"}</p>
     <small class="opacity-50">
