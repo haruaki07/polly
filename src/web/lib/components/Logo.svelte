@@ -1,5 +1,9 @@
 <script>
+  export let invert = false
   export let size = "24px"
+  export let fill = "rgba(5, 150, 105, 1)"
+  export let stroke = "rgba(255, 255, 255, 1)"
+  export let className = ""
 </script>
 
 <svg
@@ -8,10 +12,11 @@
   height={size}
   viewBox="0 0 24 24"
   stroke-width="2.00"
-  stroke="rgba(255, 255, 255, 1)"
+  stroke={invert ? fill : stroke}
   fill="none"
   stroke-linecap="round"
   stroke-linejoin="round"
+  class={className}
 >
   <rect
     x="0"
@@ -20,7 +25,7 @@
     height="100%"
     stroke="none"
     stroke-width="0"
-    fill="rgba(5, 150, 105, 1)"
+    fill={invert ? stroke : fill}
     rx="5"
     ry="5"
   />

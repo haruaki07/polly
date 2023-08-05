@@ -113,10 +113,10 @@
   }
 </script>
 
-<div class="sticky top-0 z-10">
-  <AppBar gridColumns="grid-cols-1">
+<div class="sticky top-0 z-10 border-b border-surface-400-500-token">
+  <AppBar gridColumns="grid-cols-1" slotDefault="flex items-center">
     <Container center>
-      <a class="inline-flex items-center gap-x-2" href=".">
+      <a class="inline-flex items-center gap-x-2" href="/">
         <Logo />
         <h4 class="h4 font-bold">Polly</h4>
       </a>

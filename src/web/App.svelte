@@ -1,20 +1,18 @@
 <script>
-  import { Route, Router } from "svelte-routing"
-  import Home from "./pages/Home.svelte"
-  import client from "./lib/graphql/client"
-  import { setClient } from "svelte-apollo"
   import { Modal, Toast } from "@skeletonlabs/skeleton"
+  import { setClient } from "svelte-apollo"
   import LoadingOverlay from "./lib/components/LoadingOverlay.svelte"
+  import client from "./lib/graphql/client"
   import { loadingStore } from "./stores/loading"
-
-  export let url = "/"
+  import Router from "./lib/routing/Router.svelte"
+  import { routes } from "./routes"
+  import { click } from "svelte-pathfinder"
 
   setClient(client)
 </script>
 
-<Router {url}>
-  <Route path="/" component={Home} />
-</Router>
+<svelte:window on:click={click} />
+<Router {routes} />
 
 <Modal />
 <Toast />
