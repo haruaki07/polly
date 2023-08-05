@@ -1,23 +1,31 @@
 <script>
-  import ChevronDown from "./Icons/ChevronDown.svelte"
+  // import ChevronDown from "./Icons/ChevronDown.svelte"
   import ChevronUp from "./Icons/ChevronUp.svelte"
   import Trash from "./Icons/Trash.svelte"
+  import { scale } from "svelte/transition"
 
-  // export let question;
+  export let question
 </script>
 
-<div class="card p-4 variant-soft rounded-tl-none space-y-2 group">
+<div
+  class="card p-4 variant-soft rounded-tl-none space-y-2 group"
+  transition:scale
+>
   <header class="flex justify-between items-center">
-    <p class="font-bold">name</p>
-    <small class="opacity-50">{new Date().toISOString()}</small>
+    <p class="font-bold">{question.username ?? "Anonymous"}</p>
+    <small class="opacity-50">
+      {new Date(question.created_at).toISOString()}
+    </small>
   </header>
   <p class="text-sm">
-    Lorem ipsum, dolor sit amet consectetur adipisicing elit. Aut, adipisci?
+    {question.content}
   </p>
   <div class="flex items-center justify-between">
     <div class="inline-flex items-center gap-x-2">
-      <span class="badge" title="10 Upvotes"><ChevronUp /> 10</span>
-      <span class="badge" title="2 Downvotes"><ChevronDown /> 2</span>
+      <span class="badge" title="10 Upvotes">
+        <ChevronUp />
+        {question.upvotes}
+      </span>
     </div>
 
     <div class="group-hover:opacity-100 opacity-0">

@@ -6,6 +6,7 @@
   import Logo from "../lib/components/Logo.svelte"
   import Spinner from "../lib/components/Spinner.svelte"
   import { loadingStore } from "../stores/loading"
+  import { goto } from "svelte-pathfinder"
 
   const joinEvent = mutation(gql`
     mutation JoinEvent($event_code: ID!) {
@@ -99,6 +100,9 @@
             message: `Event #${res.data.createEvent.code} created! Navigating...`,
             background: "variant-filled-success",
           })
+
+          await new Promise((r) => setTimeout(r, 1000))
+          goto(`/events/${res.data.createEvent.code}/admin`)
         } catch (e) {
           console.error(e)
           toastStore.trigger({

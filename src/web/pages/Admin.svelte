@@ -1,31 +1,105 @@
 <script>
+  import { gql } from "@apollo/client/core"
   import { AppBar } from "@skeletonlabs/skeleton"
+  import { query, subscribe } from "svelte-apollo"
   import AdminTabs from "../lib/components/AdminTabs.svelte"
   import Container from "../lib/components/Container.svelte"
   import QuestionBubble from "../lib/components/QuestionBubble.svelte"
+  import NotFound from "../lib/routing/NotFound.svelte"
+  import { loadingStore } from "../stores/loading"
 
-  /** @type {{id: string}} */
+  /** @type {{code: string}} */
   export let params
+
+  let questions = []
+
+  const eventQuery = query(
+    gql`
+      query eventDetail($code: ID!) {
+        event(code: $code) {
+          code
+          name
+          questions {
+            id
+            content
+            username
+            upvotes
+            created_at
+          }
+        }
+      }
+    `,
+    { variables: { code: params.code } }
+  )
+
+  const newQuestionSubscribe = subscribe(gql`
+    subscription SubscribeEventQuestions {
+      eventNewQuestion {
+        id
+        content
+        upvotes
+        username
+        created_at
+      }
+    }
+  `)
+
+  $: $loadingStore = $eventQuery.loading
+  $: if ($eventQuery.data?.event) {
+    questions = [...$eventQuery.data?.event?.questions, ...questions]
+  }
+  $: {
+    params.code
+    $loadingStore = true
+    eventQuery
+      .refetch({ code: params.code })
+      .then(() => ($loadingStore = false))
+  }
+  $: if ($newQuestionSubscribe.data?.eventNewQuestion) {
+    questions = [$newQuestionSubscribe.data.eventNewQuestion, ...questions]
+  }
+  $: sortedQuestions = [...questions].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  )
 </script>
 
-<div class="sticky top-0 z-10">
-  <AppBar
-    border="border-b border-surface-500/30"
-    gridColumns="grid-cols-3 max-w-5xl w-full mx-auto"
-    slotDefault="flex items-center"
-  >
-    <h4 class="h4 font-bold" slot="lead">Event Name Bla</h4>
-
-    <div class="flex flex-col w-full place-items-center text-center truncate">
-      <span class="badge variant-soft-primary">#{params.id}</span>
+{#key params.code}
+  {#if $eventQuery.error}
+    An error occurred: {$eventQuery.error.message}.
+  {:else if $eventQuery.data?.event}
+    <div class="flex-shrink-0">
+      <AppBar
+        border="border-b border-surface-500/30"
+        gridColumns="grid-cols-3 max-w-5xl w-full mx-auto"
+        slotDefault="flex items-center"
+      >
+        <h4 class="h4 font-bold" slot="lead">{$eventQuery.data.event.name}</h4>
+        <div
+          class="flex flex-col w-full place-items-center text-center truncate"
+        >
+          <span class="badge variant-soft-primary">
+            #{$eventQuery.data.event.code}
+          </span>
+        </div>
+      </AppBar>
+      <AdminTabs eventCode={$eventQuery.data.event.code} />
     </div>
-  </AppBar>
-</div>
 
-<AdminTabs />
-
-<Container center className="mt-4 grid grid-cols-5">
-  <div class="card bg-white/10 p-4 col-span-3">
-    <QuestionBubble />
-  </div>
-</Container>
+    <Container
+      center
+      className="py-4 grid grid-cols-5 flex-1 overflow-y-hidden px-4 lg:px-0"
+    >
+      <div
+        class="card bg-white/10 p-4 flex flex-col gap-y-4 col-span-3 overflow-y-auto h-full"
+      >
+        {#each sortedQuestions as question (question.id)}
+          <QuestionBubble {question} />
+        {:else}
+          No questions
+        {/each}
+      </div>
+    </Container>
+  {:else if !$eventQuery.loading}
+    <NotFound />
+  {/if}
+{/key}

@@ -6,8 +6,17 @@
   --theme-font-family-heading: "Inter", sans-serif;
 }
 
+html,
+body,
+#app {
+  height: 100%;
+}
+
 #app {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 body {
@@ -21,7 +30,7 @@ body {
       rgba(var(--color-error-500) / 0.33) 0px,
       transparent 50%
     );
-  @apply bg-cover bg-center min-h-screen;
+  @apply bg-cover bg-center;
 }
 
 .input-no-arrow::-webkit-inner-spin-button,

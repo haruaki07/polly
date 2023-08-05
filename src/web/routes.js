@@ -11,5 +11,5 @@ import Home from "./pages/Home.svelte"
 /** @type {Route[]} */
 export const routes = [
   { path: "/", component: Home },
-  { path: "/events/:id/admin/", component: Admin },
+  { path: /^\/events\/(?<code>\d+)\/admin/, component: Admin },
 ]
