@@ -12,8 +12,6 @@
   /** @type {{code: string}} */
   export let params
 
-  let questions = []
-
   const eventQuery = query(
     gql`
       query eventDetail($code: ID!) {
@@ -37,7 +35,7 @@
   $: $loadingStore = $eventQuery.loading
 
   // subscribe to new questions and upvotes
-  $: if ($eventQuery.data?.event) {
+  $: if ($eventQuery.data?.event != null) {
     eventQuery.subscribeToMore({
       document: gql`
         subscription SubscribeEventQuestions {
@@ -85,15 +83,6 @@
         })
       },
     })
-  }
-
-  // refetch query on param code change
-  $: {
-    params.code
-    $loadingStore = true
-    eventQuery
-      .refetch({ code: params.code })
-      .then(() => ($loadingStore = false))
   }
 
   $: sortedQuestions = [...($eventQuery.data?.event?.questions ?? [])].sort(
