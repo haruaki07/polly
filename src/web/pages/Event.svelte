@@ -26,6 +26,7 @@
             upvotes
             created_at
             owner
+            canUpvote
           }
         }
       }
@@ -49,6 +50,7 @@
             username
             created_at
             owner
+            canUpvote
           }
         }
       `,

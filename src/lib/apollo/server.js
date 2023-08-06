@@ -39,6 +39,7 @@ export async function createApolloServer({
 
         return {
           pubsub,
+          dataSources: { sqlite },
           token: cookies.token
             ? { payload: jwt.verifyToken(cookies.token) }
             : null,
