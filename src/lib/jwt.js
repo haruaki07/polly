@@ -1,6 +1,6 @@
 import JWT from "jsonwebtoken"
 
-const key = "abcd"
+const key = process.env.JWT_KEY || "abcd"
 
 export const jwt = {
   createToken({ event_code, admin = false, uuid }) {

@@ -1,5 +1,6 @@
 import { makeExecutableSchema } from "@graphql-tools/schema"
 import cookieParser from "cookie-parser"
+import "dotenv/config"
 import express from "express"
 import { RedisPubSub } from "graphql-redis-subscriptions"
 import helmet from "helmet"
@@ -17,13 +18,16 @@ import { resolvers } from "./resolvers.js"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const isDev = process.env.NODE_ENV === "development"
+const HOST = process.env.HOST || "localhost"
 const PORT = 3000
 
-const database = initDB(join(__dirname, "..", "polly.db"))
+const database = initDB(
+  isDev ? join(__dirname, "..", "polly.db") : process.env.DATABASE
+)
 const pubsub = new RedisPubSub({
   connection: {
-    host: "localhost",
-    port: 6379,
+    host: process.env.REDIS_HOST || "localhost",
+    port: +process.env.REDIS_PORT || 6379,
   },
 })
 
@@ -84,6 +88,6 @@ if (isDev) {
   })
 }
 
-httpServer.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`)
+httpServer.listen(PORT, HOST, () => {
+  console.log(`Server is running at http://${HOST}:${PORT}`)
 })
