@@ -1,4 +1,6 @@
 <script>
+  import QuestionPrompt from "../lib/components/QuestionPrompt.svelte"
+
   import { gql } from "@apollo/client/core"
   import { AppBar } from "@skeletonlabs/skeleton"
   import { produce } from "immer"
@@ -136,7 +138,7 @@
 
     <Container
       center
-      className="py-4 grid grid-cols-5 flex-1 overflow-y-hidden px-4 lg:px-0"
+      className="py-4 grid grid-cols-5 gap-x-4 flex-1 overflow-y-hidden px-4 lg:px-0"
     >
       <div
         class="card bg-white/10 p-4 flex flex-col gap-y-4 col-span-3 overflow-y-auto h-full"
@@ -146,6 +148,9 @@
         {:else}
           No questions
         {/each}
+      </div>
+      <div class="col-span-2">
+        <QuestionPrompt />
       </div>
     </Container>
   {:else if !$eventQuery.loading}
