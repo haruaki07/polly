@@ -1,12 +1,12 @@
+import { GraphQLError } from "graphql"
 import { withFilter } from "graphql-subscriptions"
-import { jwt } from "./lib/jwt.js"
-import { GraphQLError, valueFromASTUntyped } from "graphql"
 import { randomUUID } from "node:crypto"
+import { jwt } from "./lib/jwt.js"
 
 class AuthenticationError extends GraphQLError {
   constructor() {
     super("You are not authorized to access this resource.", {
-      extensions: { code: "UNAUTHENTICATED" },
+      extensions: { code: "UNAUTHORIZED" },
     })
   }
 }
@@ -91,10 +91,61 @@ export const resolvers = {
 
       return q
     },
-    upvoteQuestion: (_, { input: { id } }, { dataSources, pubsub, token }) => {
+    upvoteQuestion: async (
+      _,
+      { input: { id } },
+      { dataSources, pubsub, token }
+    ) => {
       if (!token) throw new AuthenticationError()
 
-      const { upvotes } = dataSources.sqlite.incrQuestionUpvote(id)
+      const question = await dataSources.sqlite.findQuestionUpvoteByUserId.load(
+        {
+          questionId: id,
+          userId: token.payload.uuid,
+        }
+      )
+      if (question)
+        throw new GraphQLError("Cannot upvote same question multiple times", {
+          extensions: { code: "BAD_USER_INPUT" },
+        })
+
+      const { upvotes } = dataSources.sqlite.incrQuestionUpvote(
+        id,
+        token.payload.uuid
+      )
+
+      pubsub.publish("QUESTION_UPVOTES_UPDATE", {
+        event_code: token.payload.event_code,
+        eventQuestionsUpvote: {
+          question_id: id,
+          upvotes,
+        },
+      })
+
+      return upvotes
+    },
+    undoUpvoteQuestion: async (
+      _,
+      { input: { id } },
+      { dataSources, pubsub, token }
+    ) => {
+      if (!token) throw new AuthenticationError()
+
+      const question = await dataSources.sqlite.findQuestionUpvoteByUserId.load(
+        {
+          questionId: id,
+          userId: token.payload.uuid,
+        }
+      )
+      if (!question)
+        throw new GraphQLError("Not upvoted yet", {
+          extensions: { code: "BAD_USER_INPUT" },
+        })
+
+      const { upvotes } = dataSources.sqlite.decrQuestionUpvote(
+        id,
+        token.payload.uuid
+      )
 
       pubsub.publish("QUESTION_UPVOTES_UPDATE", {
         event_code: token.payload.event_code,
@@ -177,6 +228,19 @@ export const resolvers = {
   Question: {
     owner: ({ user_uuid }, _, { token }) => {
       return user_uuid === token.payload.uuid
+    },
+    upvotes: async ({ id }, _, { dataSources }) => {
+      const row = await dataSources.sqlite.countQuestionUpvotes.load(id)
+
+      return row.upvotes
+    },
+    canUpvote: async ({ id }, _, { dataSources, token }) => {
+      const exist = await dataSources.sqlite.findQuestionUpvoteByUserId.load({
+        questionId: id,
+        userId: token.payload.uuid,
+      })
+
+      return !exist
     },
   },
 }

@@ -42,6 +42,7 @@ type Mutation {
   createQuestion(input: CreateQuestionInput!): Question
   deleteQuestion(input: DeleteQuestionInput!): DeleteQuestionResponse
   upvoteQuestion(input: UpvoteQuestionInput!): Int!
+  undoUpvoteQuestion(input: UpvoteQuestionInput!): Int!
 }
 
 type EventQuestionsUpvoteResponse {
@@ -68,4 +69,5 @@ type Question {
   upvotes: Int!
   created_at: String
   owner: Boolean!
+  canUpvote: Boolean
 }
