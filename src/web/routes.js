@@ -6,10 +6,12 @@
  */
 
 import Admin from "./pages/Admin.svelte"
+import Event from "./pages/Event.svelte"
 import Home from "./pages/Home.svelte"
 
 /** @type {Route[]} */
 export const routes = [
   { path: "/", component: Home },
   { path: /^\/events\/(?<code>\d+)\/admin/, component: Admin, rerender: true },
+  { path: /^\/events\/(?<code>\d+)/, component: Event, rerender: true },
 ]

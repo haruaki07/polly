@@ -69,6 +69,8 @@
         message: `Joined to event #${code}`,
         background: "variant-filled-success",
       })
+
+      goto(`/events/${code}`)
     } catch (e) {
       console.error(e)
       toastStore.trigger({

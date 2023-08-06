@@ -17,7 +17,7 @@ import { jwt } from "../jwt.js"
  *   wsServer: import("ws").WebSocketServer,
  *   deps: {
  *     pubsub: import("graphql-subscriptions").PubSubEngine,
- *     sqlite: import('../../datasource').SQLiteDataSource
+ *     sqlite: import('../../datasource.js').SQLiteDataSource
  *   }
  * }} param0
  * @returns

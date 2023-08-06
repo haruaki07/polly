@@ -31,18 +31,24 @@ export class SQLiteDataSource {
     return stmt.get(code, name)
   }
 
-  createQuestion({ content, username, event_code }) {
+  createQuestion({ content, username, user_uuid, event_code }) {
     const stmt = this.#db.prepare(
-      `INSERT INTO questions (content, username, event_code, created_at)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO questions (content, username, event_code, user_uuid, created_at)
+       VALUES (?, ?, ?, ?, ?)
        RETURNING rowid AS id, *`
     )
-    return stmt.get(content, username, event_code, new Date().toISOString())
+    return stmt.get(
+      content,
+      username,
+      event_code,
+      user_uuid,
+      new Date().toISOString()
+    )
   }
 
   findEventQuestions(eventCode) {
     const stmt = this.#db.prepare(
-      `SELECT rowid AS id, content, username, upvotes, created_at
+      `SELECT rowid AS id, content, username, upvotes, created_at, user_uuid
        FROM questions 
        WHERE event_code=?`
     )
@@ -54,6 +60,13 @@ export class SQLiteDataSource {
       `UPDATE questions SET upvotes = upvotes + 1 
        WHERE rowid = ? 
        RETURNING upvotes`
+    )
+    return stmt.get(id)
+  }
+
+  findQuestionOwner(id) {
+    const stmt = this.#db.prepare(
+      `SELECT rowid, user_uuid FROM questions WHERE rowid = ?`
     )
     return stmt.get(id)
   }

@@ -67,4 +67,5 @@ type Question {
   username: String
   upvotes: Int!
   created_at: String
+  owner: Boolean!
 }

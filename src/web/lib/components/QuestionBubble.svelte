@@ -58,14 +58,16 @@
       </span>
     </div>
 
-    <div class="group-hover:opacity-100 opacity-0">
-      <button
-        type="button"
-        class="btn-icon btn-icon-sm variant-soft-error"
-        on:click={handleDelete}
-      >
-        <Trash />
-      </button>
-    </div>
+    {#if question.owner}
+      <div class="group-hover:opacity-100 opacity-0">
+        <button
+          type="button"
+          class="btn-icon btn-icon-sm variant-soft-error"
+          on:click={handleDelete}
+        >
+          <Trash />
+        </button>
+      </div>
+    {/if}
   </div>
 </div>

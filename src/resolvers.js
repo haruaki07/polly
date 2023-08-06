@@ -1,6 +1,7 @@
 import { withFilter } from "graphql-subscriptions"
 import { jwt } from "./lib/jwt.js"
 import { GraphQLError, valueFromASTUntyped } from "graphql"
+import { randomUUID } from "node:crypto"
 
 class AuthenticationError extends GraphQLError {
   constructor() {
@@ -16,7 +17,8 @@ export const resolvers = {
       return dataSources.sqlite.findEvents()
     },
     event: (_, { code }, { dataSources, token }) => {
-      if (!token) throw new AuthenticationError()
+      if (!token || token.payload.event_code !== code)
+        throw new AuthenticationError()
       return dataSources.sqlite.findEventByCode(code)
     },
   },
@@ -27,6 +29,7 @@ export const resolvers = {
       const token = jwt.createToken({
         event_code: event.code,
         admin: true,
+        uuid: randomUUID(),
       })
       res.cookie(
         "token",
@@ -46,7 +49,10 @@ export const resolvers = {
             extensions: { code: "BAD_USER_INPUT" },
           })
 
-        const token = jwt.createToken({ event_code: event.code })
+        const token = jwt.createToken({
+          event_code: event.code,
+          uuid: randomUUID(),
+        })
         res.cookie(
           "token",
           token,
@@ -78,6 +84,7 @@ export const resolvers = {
         content,
         username,
         event_code: token.payload.event_code,
+        user_uuid: token.payload.uuid,
       })
 
       pubsub.publish("EVENT_NEW_QUESTION", { eventNewQuestion: q })
@@ -103,11 +110,16 @@ export const resolvers = {
       try {
         if (!token) throw new AuthenticationError()
 
-        const questionId = dataSources.sqlite.deleteQuestion(id)
-        if (!questionId)
+        const question = dataSources.sqlite.findQuestionOwner(id)
+        if (!question)
           throw new GraphQLError("Question not found", {
             extensions: { code: "BAD_USER_INPUT" },
           })
+
+        if (question.user_uuid !== token.payload.uuid)
+          throw new AuthenticationError()
+
+        dataSources.sqlite.deleteQuestion(id)
 
         pubsub.publish("EVENT_DELETE_QUESTION", {
           event_code: token.payload.event_code,
@@ -116,7 +128,7 @@ export const resolvers = {
 
         return { success: true, message: "success" }
       } catch (e) {
-        return { suscess: false, message: e.message }
+        return { success: false, message: e.message }
       }
     },
   },
@@ -160,6 +172,11 @@ export const resolvers = {
   Event: {
     questions: ({ code }, _, { dataSources }) => {
       return dataSources.sqlite.findEventQuestions(code)
+    },
+  },
+  Question: {
+    owner: ({ user_uuid }, _, { token }) => {
+      return user_uuid === token.payload.uuid
     },
   },
 }
