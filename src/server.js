@@ -19,7 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const isDev = process.env.NODE_ENV === "development"
 const PORT = 3000
 
-const database = initDB(join(__dirname, "..", "pooly.db"))
+const database = initDB(join(__dirname, "..", "polly.db"))
 const pubsub = new RedisPubSub({
   connection: {
     host: "localhost",

@@ -1,4 +1,4 @@
 node_modules
 .env
 dist
-pooly.db
+polly.db
