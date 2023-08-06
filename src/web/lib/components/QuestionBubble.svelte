@@ -19,6 +19,12 @@
     }
   `)
 
+  const upvoteQuestionMutation = mutation(gql`
+    mutation UpvoteQuestion($input: UpvoteQuestionInput!) {
+      upvoteQuestion(input: $input)
+    }
+  `)
+
   const handleDelete = async () => {
     try {
       await deleteQuestionMutation({
@@ -28,6 +34,20 @@
       console.error(e)
       toastStore.trigger({
         message: `Failed to delete question! An error occurred.`,
+        background: "variant-filled-error",
+      })
+    }
+  }
+
+  const handleUpvote = async () => {
+    try {
+      await upvoteQuestionMutation({
+        variables: { input: { id: question.id } },
+      })
+    } catch (e) {
+      console.error(e)
+      toastStore.trigger({
+        message: `Failed to upvote! An error occurred.`,
         background: "variant-filled-error",
       })
     }
@@ -49,14 +69,16 @@
   </p>
   <div class="flex items-center justify-between">
     <div class="inline-flex items-center gap-x-2">
-      <span
+      <button
+        type="button"
         class="badge"
         class:text-secondary-500={question.upvotes > 2}
         title="10 Upvotes"
+        on:click={handleUpvote}
       >
         <ChevronUp />
         {question.upvotes}
-      </span>
+      </button>
     </div>
 
     {#if question.owner}
