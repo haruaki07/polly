@@ -16,9 +16,13 @@ export const resolvers = {
     events: (_, __, { dataSources }) => {
       return dataSources.sqlite.findEvents()
     },
-    event: (_, { code }, { dataSources, token }) => {
+    event: (_, { code, check_admin }, { dataSources, token }) => {
       if (!token || token.payload.event_code !== code)
         throw new AuthenticationError()
+
+      if (check_admin != null && !token.payload.admin)
+        throw new AuthenticationError()
+
       return dataSources.sqlite.findEventByCode(code)
     },
   },
@@ -167,7 +171,7 @@ export const resolvers = {
             extensions: { code: "BAD_USER_INPUT" },
           })
 
-        if (question.user_uuid !== token.payload.uuid)
+        if (question.user_uuid !== token.payload.uuid && !token.payload.admin)
           throw new AuthenticationError()
 
         dataSources.sqlite.deleteQuestion(id)
@@ -227,7 +231,7 @@ export const resolvers = {
   },
   Question: {
     owner: ({ user_uuid }, _, { token }) => {
-      return user_uuid === token.payload.uuid
+      return user_uuid === token.payload.uuid || token.payload.admin
     },
     upvotes: async ({ id }, _, { dataSources }) => {
       const row = await dataSources.sqlite.countQuestionUpvotes.load(id)

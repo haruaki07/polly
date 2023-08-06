@@ -8,6 +8,7 @@
   import { gql } from "@apollo/client/core"
   import { toastStore } from "@skeletonlabs/skeleton"
 
+  export let admin = false
   export let question
   let upvoted = !question.canUpvote
   let isUpvoting = false
@@ -90,21 +91,28 @@
   </p>
   <div class="flex items-center justify-between">
     <div class="inline-flex items-center gap-x-2">
-      <button
-        type="button"
-        class="badge"
-        class:text-secondary-500={question.upvotes > 2}
-        class:variant-soft-secondary={upvoted}
-        title="10 Upvotes"
-        disabled={isUpvoting}
-        on:click={handleToggleUpvote}
-      >
-        <ChevronUp />
-        {question.upvotes}
-      </button>
+      {#if admin}
+        <span class="badge" title="10 Upvotes">
+          <ChevronUp />
+          {question.upvotes}
+        </span>
+      {:else}
+        <button
+          type="button"
+          class="badge"
+          class:text-secondary-500={question.upvotes > 2}
+          class:variant-soft-secondary={upvoted}
+          title="10 Upvotes"
+          disabled={isUpvoting}
+          on:click={handleToggleUpvote}
+        >
+          <ChevronUp />
+          {question.upvotes}
+        </button>
+      {/if}
     </div>
 
-    {#if question.owner}
+    {#if question.owner || admin}
       <div class="group-hover:opacity-100 opacity-0">
         <button
           type="button"

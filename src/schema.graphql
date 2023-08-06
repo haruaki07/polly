@@ -1,6 +1,6 @@
 type Query {
   events: [Event]!
-  event(code: ID!): Event
+  event(code: ID!, check_admin: Boolean): Event
 }
 
 input CreateQuestionInput {

@@ -15,7 +15,7 @@
   const eventQuery = query(
     gql`
       query eventDetail($code: ID!) {
-        event(code: $code) {
+        event(code: $code, check_admin: true) {
           code
           name
           questions {
@@ -24,6 +24,7 @@
             username
             upvotes
             created_at
+            owner
           }
         }
       }
@@ -46,6 +47,7 @@
             upvotes
             username
             created_at
+            owner
           }
         }
       `,
@@ -142,7 +144,7 @@
         class="card bg-white/10 p-4 flex flex-col gap-y-4 col-span-3 overflow-y-auto h-full"
       >
         {#each sortedQuestions as question (question.id)}
-          <QuestionBubble {question} />
+          <QuestionBubble {question} admin={true} />
         {:else}
           No questions
         {/each}
